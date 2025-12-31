@@ -12,7 +12,7 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(800, 500); // Canvas size as per requirements
+  createCanvas(windowWidth, windowHeight); // Canvas size as per requirements
   
   // Spawn initial 10 fish at random positions
   resetAquarium();
