@@ -41,6 +41,17 @@ function setup() {
   creatures.push(createStarfish(random(100, width - 100), height - 30)); // Starfish
 }
 
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  // Reposition plants and creatures to adapt to new size
+  plants.forEach(p => {
+    p.baseY = height;
+  });
+  creatures.forEach(c => {
+    if (c.y > height - 30) c.y = height - 30; // Keep them above sandy bottom
+  });
+}
+
 function draw() {
   background(135, 206, 235); // Light blue background for water
   
