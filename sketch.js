@@ -176,17 +176,17 @@ function updateFish() {
         if (spd > 4) { f.vx = f.vx/spd*4; f.vy = f.vy/spd*4; }
       }
     }
-  
+ 
     f.x += f.vx;
     f.y += f.vy;
-  
+ 
     if (f.x < 0 || f.x > width) f.vx *= -1;
     if (f.y < 0 || f.y > height - 40) f.vy *= -1;
     f.x = constrain(f.x, 0, width);
     f.y = constrain(f.y, 0, height - 40);
-  
+ 
     f.wiggle += f.wiggleSpeed;
-  
+ 
     if (random() < 0.012) {
       bubbles.push({x: f.x, y: f.y, size: random(6, 12), vy: random(-1.5, -2.5), alpha: 180});
     }
@@ -198,7 +198,7 @@ function renderFish() {
     push();
     translate(f.x, f.y);
     rotate(atan2(f.vy, f.vx) + PI); // Flip 180° so head follows direction
-   
+  
     // Body
     fill(f.colour);
     noStroke();
@@ -207,25 +207,25 @@ function renderFish() {
     bezierVertex(f.size/2, -f.size/3 + sin(f.wiggle)*3, f.size, -f.size/10, f.size, 0);
     bezierVertex(f.size, f.size/10, f.size/2, f.size/3 - sin(f.wiggle)*3, 0, 0);
     endShape(CLOSE);
-  
+ 
     // Pectoral fins
     fill(red(f.colour)-40, green(f.colour)-40, blue(f.colour)-40);
     triangle(f.size/4, -f.size/5, f.size/4 - 10, -f.size/2 + sin(f.wiggle)*4, f.size/4 + 5, -f.size/6);
     triangle(f.size/4, f.size/5, f.size/4 - 10, f.size/2 - sin(f.wiggle)*4, f.size/4 + 5, f.size/6);
-  
+ 
     // Dorsal fin
     triangle(f.size/2, 0, f.size/1.8, -f.size/3 + cos(f.wiggle)*5, f.size/1.3, 0);
-  
+ 
     // Tail
     fill(f.colour);
     triangle(f.size, 0, f.size*1.3 + cos(f.wiggle)*8, -f.size/3, f.size*1.3 + cos(f.wiggle)*8, f.size/3);
-  
+ 
     // Eye (now on the head after flip)
     fill(255);
     ellipse(f.size - f.size/5, -f.size/12, f.size/8, f.size/8);
     fill(0);
     ellipse(f.size - f.size/5 + 2, -f.size/12, f.size/12, f.size/12);
-  
+ 
     // Scales hint
     stroke(f.colour);
     strokeWeight(2);
@@ -268,7 +268,7 @@ function renderCreatures() {
     push();
     translate(c.x, c.y);
     if (c.vx) rotate(atan2(0, c.vx));
-  
+ 
     if (c.size === 45) { // Turtle
       fill(34, 139, 34);
       ellipse(0, 0, c.size*1.2, c.size);
@@ -278,11 +278,11 @@ function renderCreatures() {
       }
       fill(34, 139, 34);
       ellipse(0,0,c.size/1.5,c.size/1.8);
-    
+   
       ellipse(-c.size/1.8 + sin(c.wiggle)*3, 0, 20, 15);
       fill(0);
       ellipse(-c.size/1.8 + 8, -4, 5,5);
-    
+   
       ellipse(-c.size/3, -c.size/3 + cos(c.wiggle)*4, 15,25);
       ellipse(-c.size/3, c.size/3 - cos(c.wiggle)*4, 15,25);
       ellipse(c.size/4, -c.size/4 + sin(c.wiggle)*3, 12,20);
@@ -295,7 +295,7 @@ function renderCreatures() {
       ellipse(-10, -10, 8,8); ellipse(10, -10, 8,8);
       fill(0);
       ellipse(-10, -10, 4,4); ellipse(10, -10, 4,4);
-    
+   
       stroke(200, 80, 160);
       strokeWeight(8);
       for (let i=0; i<8; i++) {
@@ -335,17 +335,17 @@ function renderCreatures() {
 function updateWhale() {
   whaleTimer--;
   if (whaleTimer <= 0 && !whale) {
-    // Always spawn from the left with positive velocity
-    whale = {x: -300, y: height/2, vx: 1.8, size:220, wiggle:0, wiggleSpeed:0.04};
+    // Spawn from the right, moving left (negative vx)
+    whale = {x: width + 300, y: height/2, vx: -1.8, size:220, wiggle:0, wiggleSpeed:0.04};
     whaleTimer = floor(random(1800, 3600));
   }
   if (whale) {
     whale.x += whale.vx;
     whale.wiggle += whale.wiggleSpeed;
     if (random() < 0.15) {
-      bubbles.push({x: whale.x - whale.size/3, y: whale.y - whale.size/3, size: random(15,30), vy: random(-3,-5), alpha:200});
+      bubbles.push({x: whale.x + whale.size/3, y: whale.y - whale.size/3, size: random(15,30), vy: random(-3,-5), alpha:200});
     }
-    if (whale.x > width + 300) whale = null;
+    if (whale.x < -300) whale = null;
   }
 }
 
@@ -378,14 +378,14 @@ function renderWhale() {
 function updateShark() {
   sharkTimer--;
   if (sharkTimer <= 0 && !shark) {
-    // Always spawn from the left with positive velocity
-    shark = {x: -250, y: height/2 + random(-150,150), vx: random(3,5), size:180, wiggle:0, wiggleSpeed:0.1};
+    // Spawn from the right, moving left (negative vx)
+    shark = {x: width + 250, y: height/2 + random(-150,150), vx: -random(3,5), size:180, wiggle:0, wiggleSpeed:0.1};
     sharkTimer = floor(random(2400, 4800));
   }
   if (shark) {
     shark.x += shark.vx;
     shark.wiggle += shark.wiggleSpeed;
-    if (shark.x > width + 300) shark = null;
+    if (shark.x < -300) shark = null;
   }
 }
 
@@ -426,11 +426,11 @@ function updateDolphins() {
     let count = floor(random(3,6));
     let baseY = height/2 + random(-100,100);
     for (let i = 0; i < count; i++) {
-      // Always spawn from the left with positive velocity
+      // Spawn from the right, moving left (negative vx)
       dolphins.push({
-        x: -200 - i*80,
+        x: width + 200 + i*80,
         y: baseY + sin(i)*40,
-        vx: random(2.5, 4),
+        vx: -random(2.5, 4),
         size: random(80, 110),
         wiggle: i*0.5,
         wiggleSpeed: 0.08,
@@ -446,10 +446,11 @@ function updateDolphins() {
       d.y = d.baseY + sin(frameCount*0.05 + d.offset)*50;
       d.wiggle += d.wiggleSpeed;
       if (random() < 0.08) {
-        bubbles.push({x: d.x - d.size/3, y: d.y, size: random(8,16), vy: random(-2,-4), alpha:180});
+        bubbles.push({x: d.x + d.size/3, y: d.y, size: random(8,16), vy: random(-2,-4), alpha:180});
       }
     });
-    if (dolphins[0].x > width + 200) dolphins = [];
+    // Check the first dolphin (they are ordered from right to left)
+    if (dolphins[dolphins.length-1].x < -200) dolphins = [];
   }
 }
 
