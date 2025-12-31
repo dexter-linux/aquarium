@@ -81,10 +81,10 @@ function regenerateEnvironment() {
 }
 
 function draw() {
-  // === NEW: Sunset gradient background ===
+  // === Sunset gradient background ===
   drawSunsetBackground();
 
-  // === NEW: Gentle surface waves ===
+  // === Gentle surface waves ===
   drawSurfaceWaves();
  
   // Sandy bottom
@@ -123,7 +123,7 @@ function draw() {
   renderHUD();
 }
 
-// === NEW: Sunset Background with Sun ===
+// === Sunset Background with Sun ===
 function drawSunsetBackground() {
   for (let y = 0; y <= height; y++) {
     let inter = map(y, 0, height, 0, 1);
@@ -146,7 +146,7 @@ function drawSunsetBackground() {
   ellipse(sunX, sunY, 80);
 }
 
-// === NEW: Surface Waves ===
+// === Surface Waves ===
 function drawSurfaceWaves() {
   noFill();
   strokeWeight(3);
@@ -210,8 +210,9 @@ function renderFish() {
   for (let f of fish) {
     push();
     translate(f.x, f.y);
-    rotate(atan2(f.vy, f.vx));
-   
+    rotate(atan2(f.vy, f.vx) + PI);  // Flip 180° so head follows direction
+    
+    // Body
     fill(f.colour);
     noStroke();
     beginShape();
@@ -220,20 +221,25 @@ function renderFish() {
     bezierVertex(f.size, f.size/10, f.size/2, f.size/3 - sin(f.wiggle)*3, 0, 0);
     endShape(CLOSE);
    
+    // Pectoral fins
     fill(red(f.colour)-40, green(f.colour)-40, blue(f.colour)-40);
     triangle(f.size/4, -f.size/5, f.size/4 - 10, -f.size/2 + sin(f.wiggle)*4, f.size/4 + 5, -f.size/6);
     triangle(f.size/4, f.size/5, f.size/4 - 10, f.size/2 - sin(f.wiggle)*4, f.size/4 + 5, f.size/6);
    
+    // Dorsal fin
     triangle(f.size/2, 0, f.size/1.8, -f.size/3 + cos(f.wiggle)*5, f.size/1.3, 0);
    
+    // Tail
     fill(f.colour);
     triangle(f.size, 0, f.size*1.3 + cos(f.wiggle)*8, -f.size/3, f.size*1.3 + cos(f.wiggle)*8, f.size/3);
    
+    // Eye (now on the head after flip)
     fill(255);
-    ellipse(f.size/5, -f.size/12, f.size/8, f.size/8);
+    ellipse(f.size - f.size/5, -f.size/12, f.size/8, f.size/8);
     fill(0);
-    ellipse(f.size/5 + 2, -f.size/12, f.size/12, f.size/12);
+    ellipse(f.size - f.size/5 + 2, -f.size/12, f.size/12, f.size/12);
    
+    // Scales hint
     stroke(f.colour);
     strokeWeight(2);
     for (let i = 1; i < 5; i++) {
