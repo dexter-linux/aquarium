@@ -22,20 +22,15 @@ function preload() {
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
- 
   caustics = createGraphics(width, height);
   caustics.background(0, 0);
- 
   resetAquarium();
   regenerateEnvironment();
- 
   // Add bottom creatures
   creatures.push(createTurtle(random(width / 3), height - 60));
   creatures.push(createOctopus(random(width / 3, 2 * width / 3), height - 80));
   creatures.push(createStarfish(random(width - 200, width - 50), height - 40));
- 
   bgMusic.loop();
- 
   // Timers for rare visitors
   whaleTimer = floor(random(300, 600));
   sharkTimer = floor(random(900, 1800)); // 15–30 seconds
@@ -83,19 +78,15 @@ function regenerateEnvironment() {
 function draw() {
   // === Sunset gradient background ===
   drawSunsetBackground();
-
   // === Gentle surface waves ===
   drawSurfaceWaves();
- 
   // Sandy bottom
   fill(210, 190, 140);
   noStroke();
   rect(0, height - 30, width, 30);
- 
   renderRocks();
   renderPlants();
   renderCreatures();
- 
   if (!paused) {
     updateFish();
     updateCreatures();
@@ -107,12 +98,10 @@ function draw() {
     updateMessages();
     updateCaustics();
   }
- 
   // Subtle caustics overlay
   blendMode(SCREEN);
   image(caustics, 0, 0);
   blendMode(BLEND);
- 
   renderFish();
   if (whale) renderWhale();
   if (shark) renderShark();
@@ -133,7 +122,6 @@ function drawSunsetBackground() {
     stroke(c);
     line(0, y, width, y);
   }
-
   // Glowing sun
   let sunY = height * 0.2;
   let sunX = width * 0.8 + sin(frameCount * 0.02) * 40;
@@ -167,7 +155,6 @@ function spawnFish(x, y) {
   let vy = random(-3, 3);
   let speed = sqrt(vx*vx + vy*vy);
   if (speed > 4) { vx = vx/speed*4; vy = vy/speed*4; }
- 
   fish.push({
     x, y, vx, vy,
     size: random(25, 45),
@@ -189,17 +176,17 @@ function updateFish() {
         if (spd > 4) { f.vx = f.vx/spd*4; f.vy = f.vy/spd*4; }
       }
     }
-   
+  
     f.x += f.vx;
     f.y += f.vy;
-   
+  
     if (f.x < 0 || f.x > width) f.vx *= -1;
     if (f.y < 0 || f.y > height - 40) f.vy *= -1;
     f.x = constrain(f.x, 0, width);
     f.y = constrain(f.y, 0, height - 40);
-   
+  
     f.wiggle += f.wiggleSpeed;
-   
+  
     if (random() < 0.012) {
       bubbles.push({x: f.x, y: f.y, size: random(6, 12), vy: random(-1.5, -2.5), alpha: 180});
     }
@@ -210,8 +197,8 @@ function renderFish() {
   for (let f of fish) {
     push();
     translate(f.x, f.y);
-    rotate(atan2(f.vy, f.vx) + PI);  // Flip 180° so head follows direction
-    
+    rotate(atan2(f.vy, f.vx) + PI); // Flip 180° so head follows direction
+   
     // Body
     fill(f.colour);
     noStroke();
@@ -220,25 +207,25 @@ function renderFish() {
     bezierVertex(f.size/2, -f.size/3 + sin(f.wiggle)*3, f.size, -f.size/10, f.size, 0);
     bezierVertex(f.size, f.size/10, f.size/2, f.size/3 - sin(f.wiggle)*3, 0, 0);
     endShape(CLOSE);
-   
+  
     // Pectoral fins
     fill(red(f.colour)-40, green(f.colour)-40, blue(f.colour)-40);
     triangle(f.size/4, -f.size/5, f.size/4 - 10, -f.size/2 + sin(f.wiggle)*4, f.size/4 + 5, -f.size/6);
     triangle(f.size/4, f.size/5, f.size/4 - 10, f.size/2 - sin(f.wiggle)*4, f.size/4 + 5, f.size/6);
-   
+  
     // Dorsal fin
     triangle(f.size/2, 0, f.size/1.8, -f.size/3 + cos(f.wiggle)*5, f.size/1.3, 0);
-   
+  
     // Tail
     fill(f.colour);
     triangle(f.size, 0, f.size*1.3 + cos(f.wiggle)*8, -f.size/3, f.size*1.3 + cos(f.wiggle)*8, f.size/3);
-   
+  
     // Eye (now on the head after flip)
     fill(255);
     ellipse(f.size - f.size/5, -f.size/12, f.size/8, f.size/8);
     fill(0);
     ellipse(f.size - f.size/5 + 2, -f.size/12, f.size/12, f.size/12);
-   
+  
     // Scales hint
     stroke(f.colour);
     strokeWeight(2);
@@ -253,9 +240,11 @@ function renderFish() {
 function createTurtle(x, y) {
   return {x, y, vx: random(0.8, 1.8)*(random()>0.5?1:-1), size:45, wiggle:0, wiggleSpeed:0.06};
 }
+
 function createOctopus(x, y) {
   return {x, y, vx: random(0.4, 1)*(random()>0.5?1:-1), size:55, wiggle:0, wiggleSpeed:0.12};
 }
+
 function createStarfish(x, y) {
   return {x, y, vx:0, size:35, rotation:0, rotSpeed:0.008};
 }
@@ -279,7 +268,7 @@ function renderCreatures() {
     push();
     translate(c.x, c.y);
     if (c.vx) rotate(atan2(0, c.vx));
-   
+  
     if (c.size === 45) { // Turtle
       fill(34, 139, 34);
       ellipse(0, 0, c.size*1.2, c.size);
@@ -289,11 +278,11 @@ function renderCreatures() {
       }
       fill(34, 139, 34);
       ellipse(0,0,c.size/1.5,c.size/1.8);
-     
+    
       ellipse(-c.size/1.8 + sin(c.wiggle)*3, 0, 20, 15);
       fill(0);
       ellipse(-c.size/1.8 + 8, -4, 5,5);
-     
+    
       ellipse(-c.size/3, -c.size/3 + cos(c.wiggle)*4, 15,25);
       ellipse(-c.size/3, c.size/3 - cos(c.wiggle)*4, 15,25);
       ellipse(c.size/4, -c.size/4 + sin(c.wiggle)*3, 12,20);
@@ -306,7 +295,7 @@ function renderCreatures() {
       ellipse(-10, -10, 8,8); ellipse(10, -10, 8,8);
       fill(0);
       ellipse(-10, -10, 4,4); ellipse(10, -10, 4,4);
-     
+    
       stroke(200, 80, 160);
       strokeWeight(8);
       for (let i=0; i<8; i++) {
@@ -346,6 +335,7 @@ function renderCreatures() {
 function updateWhale() {
   whaleTimer--;
   if (whaleTimer <= 0 && !whale) {
+    // Always spawn from the left with positive velocity
     whale = {x: -300, y: height/2, vx: 1.8, size:220, wiggle:0, wiggleSpeed:0.04};
     whaleTimer = floor(random(1800, 3600));
   }
@@ -371,16 +361,13 @@ function renderWhale() {
   bezierVertex(-whale.size/2, -whale.size/3, 0, -whale.size/2 + sin(whale.wiggle)*15, whale.size/2, -whale.size/5);
   bezierVertex(whale.size/2, whale.size/5, 0, whale.size/2 - sin(whale.wiggle)*15, -whale.size/2, whale.size/3);
   endShape(CLOSE);
- 
   triangle(0, -whale.size/4, whale.size/6, -whale.size/2.5 + cos(whale.wiggle)*12, whale.size/3, -whale.size/5);
- 
   fill(60, 60, 140);
   beginShape();
   vertex(whale.size/2, 0);
   bezierVertex(whale.size/2 + 80 + cos(whale.wiggle*1.5)*20, -whale.size/3, whale.size/2 + 120, -whale.size/6, whale.size/2 + 80, 0);
   bezierVertex(whale.size/2 + 120, whale.size/6, whale.size/2 + 80 + cos(whale.wiggle*1.5)*20, whale.size/3, whale.size/2, 0);
   endShape(CLOSE);
- 
   fill(255);
   ellipse(-whale.size/3.5, -whale.size/10, 15,15);
   fill(0);
@@ -391,6 +378,7 @@ function renderWhale() {
 function updateShark() {
   sharkTimer--;
   if (sharkTimer <= 0 && !shark) {
+    // Always spawn from the left with positive velocity
     shark = {x: -250, y: height/2 + random(-150,150), vx: random(3,5), size:180, wiggle:0, wiggleSpeed:0.1};
     sharkTimer = floor(random(2400, 4800));
   }
@@ -413,22 +401,17 @@ function renderShark() {
   bezierVertex(-shark.size/3, -shark.size/3, shark.size/2, -shark.size/4, shark.size, 0);
   bezierVertex(shark.size/2, shark.size/4, -shark.size/3, shark.size/3, -shark.size/3, 0);
   endShape(CLOSE);
- 
   fill(80, 80, 90);
   triangle(0, -shark.size/5, shark.size/6, -shark.size/2.2 + sin(shark.wiggle)*10, shark.size/4, -shark.size/6);
- 
   triangle(shark.size, 0, shark.size*1.4 + cos(shark.wiggle)*15, -shark.size/3, shark.size*1.4 + cos(shark.wiggle)*15, shark.size/3);
- 
   fill(255);
   for (let i=0; i<8; i++) {
     triangle(shark.size - i*8, -8 + sin(i)*4, shark.size - i*8 - 6, 0, shark.size - i*8, 8 - sin(i)*4);
   }
- 
   fill(255);
   ellipse(shark.size/3, -shark.size/10, 12,12);
   fill(0);
   ellipse(shark.size/3 + 3, -shark.size/10, 6,6);
- 
   stroke(60);
   strokeWeight(3);
   for (let i=1; i<4; i++) {
@@ -443,6 +426,7 @@ function updateDolphins() {
     let count = floor(random(3,6));
     let baseY = height/2 + random(-100,100);
     for (let i = 0; i < count; i++) {
+      // Always spawn from the left with positive velocity
       dolphins.push({
         x: -200 - i*80,
         y: baseY + sin(i)*40,
@@ -451,7 +435,7 @@ function updateDolphins() {
         wiggle: i*0.5,
         wiggleSpeed: 0.08,
         offset: i,
-        baseY: baseY  // Fixed: store baseY on each dolphin
+        baseY: baseY
       });
     }
     dolphinTimer = floor(random(1800, 3000));
