@@ -25,9 +25,12 @@ function setup() {
   resetAquarium();
   regenerateEnvironment();
   // Add bottom creatures
-  creatures.push(createTurtle(random(width / 3), height - 60));
-  creatures.push(createOctopus(random(width / 3, 2 * width / 3), height - 80));
-  creatures.push(createStarfish(random(width - 200, width - 50), height - 40));
+  let tx = random(width / 3);
+  creatures.push(createTurtle(tx, getBottomY(tx) - 60));
+  let ox = random(width / 3, 2 * width / 3);
+  creatures.push(createOctopus(ox, getBottomY(ox) - 80));
+  let sx = random(width - 200, width - 50);
+  creatures.push(createStarfish(sx, getBottomY(sx) - 40));
   bgMusic.loop();
   // Timers for rare visitors
   whaleTimer = floor(random(300, 600));
@@ -39,7 +42,7 @@ function windowResized() {
   caustics.resizeCanvas(width, height);
   regenerateEnvironment();
   creatures.forEach(c => {
-    c.y = constrain(c.y, height - 100, height - 30);
+    c.y = getBottomY(c.x) - c.baseOffset;
     c.x = constrain(c.x, 0, width);
   });
   if (whale) whale.y = height / 2;
@@ -48,23 +51,34 @@ function windowResized() {
     if (d.baseY) d.y = d.baseY + sin(frameCount*0.05 + d.offset)*50;
   });
 }
+function getBottomY(x) {
+  return height - 30 + (noise(x * 0.005) * 60 - 30);
+}
 function regenerateEnvironment() {
   plants = [];
   rocks = [];
   for (let i = 0; i < floor(width / 100); i++) {
+    let px = random(50, width - 50);
+    let type = floor(random(3));
+    let col;
+    if (type === 0) col = color(random(20, 60), random(140, 200), random(20, 60));
+    else if (type === 1) col = color(random(140, 200), random(20, 60), random(20, 60));
+    else col = color(random(140, 200), random(20, 60), random(140, 200));
     plants.push({
-      x: random(50, width - 50),
-      baseY: height,
+      x: px,
+      baseY: getBottomY(px),
       height: random(60, 120 * (height / 600)),
       segments: 6,
       swayAngle: random(PI / 15, PI / 8),
-      color: color(random(20, 60), random(140, 200), random(20, 60))
+      color: col,
+      type: type
     });
   }
   for (let i = 0; i < floor(width / 200); i++) {
+    let rx = random(50, width - 50);
     rocks.push({
-      x: random(50, width - 50),
-      y: height - 15,
+      x: rx,
+      y: getBottomY(rx),
       size: random(40, 80),
       color: color(random(90, 140), random(90, 140), random(90, 140))
     });
@@ -75,10 +89,16 @@ function draw() {
   drawSunsetBackground();
   // === Gentle surface waves ===
   drawSurfaceWaves();
-  // Sandy bottom
+  // Sandy bottom with slopes
   fill(210, 190, 140);
   noStroke();
-  rect(0, height - 30, width, 30);
+  beginShape();
+  vertex(0, height);
+  for (let i = 0; i <= width; i += 10) {
+    vertex(i, getBottomY(i));
+  }
+  vertex(width, height);
+  endShape(CLOSE);
   renderRocks();
   renderPlants();
   renderCreatures();
@@ -147,6 +167,7 @@ function spawnFish(x, y) {
   let vy = random(-3, 3);
   let speed = sqrt(vx*vx + vy*vy);
   if (speed > 4) { vx = vx/speed*4; vy = vy/speed*4; }
+  if (speed === 0) { vx = 4; }
   fish.push({
     x, y, vx, vy,
     size: random(25, 45),
@@ -167,12 +188,32 @@ function updateFish() {
         if (spd > 4) { f.vx = f.vx/spd*4; f.vy = f.vy/spd*4; }
       }
     }
+    // Random gentle turn
+    if (random() < 0.005) {
+      let turn = random(-PI/4, PI/4);
+      let cosT = cos(turn);
+      let sinT = sin(turn);
+      let newVx = f.vx * cosT - f.vy * sinT;
+      let newVy = f.vx * sinT + f.vy * cosT;
+      f.vx = newVx;
+      f.vy = newVy;
+      let spd = sqrt(f.vx*f.vx + f.vy*f.vy);
+      if (spd > 0) {
+        f.vx *= 4 / spd;
+        f.vy *= 4 / spd;
+      }
+    }
     f.x += f.vx;
     f.y += f.vy;
     if (f.x < 0 || f.x > width) f.vx *= -1;
-    if (f.y < 0 || f.y > height - 40) f.vy *= -1;
+    if (f.y < 30) f.vy *= -1;
+    let bottomMargin = getBottomY(f.x) - f.size / 2 - 10;
+    if (f.y > bottomMargin) {
+      f.y = bottomMargin;
+      f.vy *= -1;
+    }
     f.x = constrain(f.x, 0, width);
-    f.y = constrain(f.y, 0, height - 40);
+    f.y = constrain(f.y, 30, bottomMargin);
     f.wiggle += f.wiggleSpeed;
     if (random() < 0.012) {
       bubbles.push({x: f.x, y: f.y, size: random(6, 12), vy: random(-1.5, -2.5), alpha: 180});
@@ -183,7 +224,7 @@ function renderFish() {
   for (let f of fish) {
     push();
     translate(f.x, f.y);
-    let absVx = Math.abs(f.vx);
+    let absVx = abs(f.vx) + 0.001; // avoid zero
     let angle = atan2(f.vy, absVx);
     if (f.vx < 0) {
       scale(-1, 1);
@@ -222,19 +263,20 @@ function renderFish() {
 }
 // =============== CREATURES =================
 function createTurtle(x, y) {
-  return {x, y, vx: random(0.8, 1.8)*(random()>0.5?1:-1), size:45, wiggle:0, wiggleSpeed:0.06};
+  return {x, y, vx: random(0.8, 1.8)*(random()>0.5?1:-1), size:45, wiggle:0, wiggleSpeed:0.06, baseOffset: 60};
 }
 function createOctopus(x, y) {
-  return {x, y, vx: random(0.4, 1)*(random()>0.5?1:-1), size:55, wiggle:0, wiggleSpeed:0.12};
+  return {x, y, vx: random(0.4, 1)*(random()>0.5?1:-1), size:55, wiggle:0, wiggleSpeed:0.12, baseOffset: 80};
 }
 function createStarfish(x, y) {
-  return {x, y, vx:0, size:35, rotation:0, rotSpeed:0.008};
+  return {x, y, vx:0, size:35, rotation:0, rotSpeed:0.008, baseOffset: 40};
 }
 function updateCreatures() {
   for (let c of creatures) {
     if (c.vx) {
       c.x += c.vx;
       if (c.x < -50 || c.x > width + 50) c.vx *= -1;
+      c.y = getBottomY(c.x) - c.baseOffset;
       c.wiggle += c.wiggleSpeed;
     }
     if (c.rotSpeed) c.rotation += c.rotSpeed;
@@ -248,7 +290,7 @@ function renderCreatures() {
     push();
     translate(c.x, c.y);
     if (c.vx) {
-      if (c.vx < 0) scale(-1, 1);
+      if (c.vx > 0) scale(-1, 1);
     }
     if (c.size === 45) { // Turtle
       fill(34, 139, 34);
@@ -336,7 +378,7 @@ function renderWhale() {
   translate(whale.x, whale.y);
   let absVx = Math.abs(whale.vx);
   let angle = atan2(0, absVx);
-  if (whale.vx < 0) scale(-1, 1);
+  if (whale.vx > 0) scale(-1, 1);
   rotate(angle);
   fill(80, 80, 160);
   noStroke();
@@ -552,18 +594,44 @@ function renderMessages() {
 }
 function renderPlants() {
   for (let p of plants) {
-    stroke(p.color);
-    strokeWeight(4);
-    let curX = p.x;
-    let curY = p.baseY;
-    for (let i = 0; i < p.segments; i++) {
-      let nextY = curY - p.height / p.segments;
-      let sway = sin(frameCount * 0.04 + p.x * 0.01 + i) * p.swayAngle * (i+1)/p.segments;
-      let nextX = curX + sway;
-      line(curX, curY, nextX, nextY);
-      curX = nextX;
-      curY = nextY;
+    push();
+    if (p.type === 0 || p.type === 2) { // Seaweed or coral-like
+      stroke(p.color);
+      strokeWeight(4);
+      let curX = p.x;
+      let curY = p.baseY;
+      for (let i = 0; i < p.segments; i++) {
+        let nextY = curY - p.height / p.segments;
+        let sway = sin(frameCount * 0.04 + p.x * 0.01 + i) * p.swayAngle * (i+1)/p.segments;
+        let nextX = curX + sway;
+        line(curX, curY, nextX, nextY);
+        curX = nextX;
+        curY = nextY;
+      }
+      if (p.type === 2) { // Add some branches for coral
+        noStroke();
+        fill(p.color);
+        ellipse(p.x, p.baseY - p.height / 2, p.height / 3, p.height / 3);
+      }
+    } else if (p.type === 1) { // Bushy
+      stroke(p.color);
+      strokeWeight(3);
+      let branchCount = 4;
+      for (let b = 0; b < branchCount; b++) {
+        let branchSway = sin(frameCount * 0.04 + p.x * 0.01 + b);
+        let curX = p.x;
+        let curY = p.baseY;
+        for (let i = 0; i < p.segments; i++) {
+          let nextY = curY - p.height / p.segments;
+          let sway = branchSway * p.swayAngle * (i+1)/p.segments * (b - branchCount/2) / branchCount * 4;
+          let nextX = curX + sway;
+          line(curX, curY, nextX, nextY);
+          curX = nextX;
+          curY = nextY;
+        }
+      }
     }
+    pop();
   }
 }
 function renderRocks() {
