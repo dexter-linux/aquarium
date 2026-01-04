@@ -15,6 +15,12 @@ let paused = false;
 let messages = [];
 let bgMusic;
 let caustics;
+const SCHOOL_RADIUS = 100;
+const SCHOOL_SEP_DIST = 30;
+const SCHOOL_SEP_WEIGHT = 1.5;
+const SCHOOL_ALI_WEIGHT = 1.0;
+const SCHOOL_COH_WEIGHT = 1.0;
+const MAX_SPEED = 4;
 function preload() {
   bgMusic = loadSound('song.mp3'); // Make sure you have a song.mp3 in your project
 }
@@ -177,17 +183,79 @@ function spawnFish(x, y) {
   });
 }
 function updateFish() {
+  let currentX = sin(frameCount * 0.005) * 0.5;
+  let currentY = cos(frameCount * 0.01) * 0.2;
   for (let f of fish) {
+    // Schooling behavior
+    let neighbors = [];
+    for (let other of fish) {
+      if (other !== f) {
+        let d = dist(f.x, f.y, other.x, other.y);
+        if (d < SCHOOL_RADIUS) {
+          neighbors.push(other);
+        }
+      }
+    }
+    if (neighbors.length > 0) {
+      // Separation
+      let sepX = 0, sepY = 0;
+      let sepCount = 0;
+      for (let neigh of neighbors) {
+        let d = dist(f.x, f.y, neigh.x, neigh.y);
+        if (d < SCHOOL_SEP_DIST && d > 0) {
+          sepX += (f.x - neigh.x) / d;
+          sepY += (f.y - neigh.y) / d;
+          sepCount++;
+        }
+      }
+      if (sepCount > 0) {
+        sepX /= sepCount;
+        sepY /= sepCount;
+      }
+      // Alignment
+      let aliX = 0, aliY = 0;
+      for (let neigh of neighbors) {
+        aliX += neigh.vx;
+        aliY += neigh.vy;
+      }
+      aliX /= neighbors.length;
+      aliY /= neighbors.length;
+      let aliMag = sqrt(aliX*aliX + aliY*aliY);
+      if (aliMag > 0) {
+        aliX = (aliX / aliMag) * MAX_SPEED;
+        aliY = (aliY / aliMag) * MAX_SPEED;
+      }
+      // Cohesion
+      let cohX = 0, cohY = 0;
+      for (let neigh of neighbors) {
+        cohX += neigh.x;
+        cohY += neigh.y;
+      }
+      cohX /= neighbors.length;
+      cohY /= neighbors.length;
+      cohX = cohX - f.x;
+      cohY = cohY - f.y;
+      let cohMag = sqrt(cohX*cohX + cohY*cohY);
+      if (cohMag > 0) {
+        cohX = (cohX / cohMag) * MAX_SPEED;
+        cohY = (cohY / cohMag) * MAX_SPEED;
+      }
+      // Apply
+      f.vx += sepX * SCHOOL_SEP_WEIGHT + (aliX - f.vx) * SCHOOL_ALI_WEIGHT + (cohX - f.vx) * SCHOOL_COH_WEIGHT;
+      f.vy += sepY * SCHOOL_SEP_WEIGHT + (aliY - f.vy) * SCHOOL_ALI_WEIGHT + (cohY - f.vy) * SCHOOL_COH_WEIGHT;
+    }
+    // Food attraction
     if (foodParticles.length > 0) {
       let nearest = foodParticles.reduce((a, b) =>
         dist(f.x, f.y, a.x, a.y) < dist(f.x, f.y, b.x, b.y) ? a : b);
       if (dist(f.x, f.y, nearest.x, nearest.y) < 150) {
         f.vx += (nearest.x - f.x) * 0.012;
         f.vy += (nearest.y - f.y) * 0.012;
-        let spd = sqrt(f.vx*f.vx + f.vy*f.vy);
-        if (spd > 4) { f.vx = f.vx/spd*4; f.vy = f.vy/spd*4; }
       }
     }
+    // Ocean current
+    f.vx += currentX * 0.1;
+    f.vy += currentY * 0.1;
     // Random gentle turn
     if (random() < 0.005) {
       let turn = random(-PI/4, PI/4);
@@ -197,10 +265,20 @@ function updateFish() {
       let newVy = f.vx * sinT + f.vy * cosT;
       f.vx = newVx;
       f.vy = newVy;
-      let spd = sqrt(f.vx*f.vx + f.vy*f.vy);
+    }
+    // Normalize speed
+    let spd = sqrt(f.vx*f.vx + f.vy*f.vy);
+    if (spd > MAX_SPEED) {
+      f.vx = f.vx / spd * MAX_SPEED;
+      f.vy = f.vy / spd * MAX_SPEED;
+    }
+    if (spd < 1) { // Avoid stopping
+      f.vx += random(-1,1);
+      f.vy += random(-1,1);
+      spd = sqrt(f.vx*f.vx + f.vy*f.vy);
       if (spd > 0) {
-        f.vx *= 4 / spd;
-        f.vy *= 4 / spd;
+        f.vx /= spd * MAX_SPEED;
+        f.vy /= spd * MAX_SPEED;
       }
     }
     f.x += f.vx;
@@ -364,6 +442,8 @@ function updateWhale() {
     whaleTimer = floor(random(1800, 3600));
   }
   if (whale) {
+    let currentX = sin(frameCount * 0.005) * 0.5;
+    whale.vx += currentX * 0.05;
     whale.x += whale.vx;
     whale.wiggle += whale.wiggleSpeed;
     if (random() < 0.15) {
@@ -411,6 +491,8 @@ function updateShark() {
     sharkTimer = floor(random(2400, 4800));
   }
   if (shark) {
+    let currentX = sin(frameCount * 0.005) * 0.5;
+    shark.vx += currentX * 0.05;
     shark.x += shark.vx;
     shark.wiggle += shark.wiggleSpeed;
     if ((shark.vx > 0 && shark.x > width + 300) || (shark.vx < 0 && shark.x < -300)) shark = null;
@@ -474,7 +556,9 @@ function updateDolphins() {
     dolphinTimer = floor(random(1800, 3000));
   }
   if (dolphins.length > 0) {
+    let currentX = sin(frameCount * 0.005) * 0.5;
     dolphins.forEach(d => {
+      d.vx += currentX * 0.05;
       d.x += d.vx;
       d.y = d.baseY + sin(frameCount*0.05 + d.offset)*50;
       d.wiggle += d.wiggleSpeed;
@@ -593,6 +677,7 @@ function renderMessages() {
   }
 }
 function renderPlants() {
+  let currentX = sin(frameCount * 0.005) * 0.5;
   for (let p of plants) {
     push();
     if (p.type === 0 || p.type === 2) { // Seaweed or coral-like
@@ -602,9 +687,14 @@ function renderPlants() {
       let curY = p.baseY;
       for (let i = 0; i < p.segments; i++) {
         let nextY = curY - p.height / p.segments;
-        let sway = sin(frameCount * 0.04 + p.x * 0.01 + i) * p.swayAngle * (i+1)/p.segments;
+        let sway = sin(frameCount * 0.04 + p.x * 0.01 + i) * p.swayAngle * (i+1)/p.segments + currentX * 0.02 * (i+1)/p.segments;
         let nextX = curX + sway;
         line(curX, curY, nextX, nextY);
+        if (random() < 0.1 && i % 2 === 0) { // Add side fronds
+          let frondLen = p.height / 8;
+          let frondAng = sway + random(-PI/6, PI/6);
+          line(nextX, nextY, nextX + cos(frondAng) * frondLen, nextY + sin(frondAng) * frondLen);
+        }
         curX = nextX;
         curY = nextY;
       }
@@ -618,7 +708,7 @@ function renderPlants() {
       strokeWeight(3);
       let branchCount = 4;
       for (let b = 0; b < branchCount; b++) {
-        let branchSway = sin(frameCount * 0.04 + p.x * 0.01 + b);
+        let branchSway = sin(frameCount * 0.04 + p.x * 0.01 + b) + currentX * 0.01;
         let curX = p.x;
         let curY = p.baseY;
         for (let i = 0; i < p.segments; i++) {
@@ -626,6 +716,10 @@ function renderPlants() {
           let sway = branchSway * p.swayAngle * (i+1)/p.segments * (b - branchCount/2) / branchCount * 4;
           let nextX = curX + sway;
           line(curX, curY, nextX, nextY);
+          if (random() < 0.15 && i % 3 === 0) { // Add leaves
+            let leafSize = 5;
+            ellipse(nextX, nextY, leafSize, leafSize * 2);
+          }
           curX = nextX;
           curY = nextY;
         }
