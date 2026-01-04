@@ -183,8 +183,12 @@ function renderFish() {
   for (let f of fish) {
     push();
     translate(f.x, f.y);
-    rotate(atan2(f.vy, f.vx) + PI); // Flip 180° so head follows direction
- 
+    let absVx = Math.abs(f.vx);
+    let angle = atan2(f.vy, absVx);
+    if (f.vx < 0) {
+      scale(-1, 1);
+    }
+    rotate(angle);
     // Body
     fill(f.colour);
     noStroke();
@@ -243,7 +247,9 @@ function renderCreatures() {
   for (let c of creatures) {
     push();
     translate(c.x, c.y);
-    if (c.vx) rotate(atan2(0, c.vx));
+    if (c.vx) {
+      if (c.vx < 0) scale(-1, 1);
+    }
     if (c.size === 45) { // Turtle
       fill(34, 139, 34);
       ellipse(0, 0, c.size*1.2, c.size);
@@ -254,14 +260,14 @@ function renderCreatures() {
       fill(34, 139, 34);
       ellipse(0,0,c.size/1.5,c.size/1.8);
   
-      ellipse(-c.size/1.8 + sin(c.wiggle)*3, 0, 20, 15);
+      ellipse(c.size/1.8 - sin(c.wiggle)*3, 0, 20, 15);
       fill(0);
-      ellipse(-c.size/1.8 + 8, -4, 5,5);
+      ellipse(c.size/1.8 - 8, -4, 5,5);
   
-      ellipse(-c.size/3, -c.size/3 + cos(c.wiggle)*4, 15,25);
-      ellipse(-c.size/3, c.size/3 - cos(c.wiggle)*4, 15,25);
-      ellipse(c.size/4, -c.size/4 + sin(c.wiggle)*3, 12,20);
-      ellipse(c.size/4, c.size/4 - sin(c.wiggle)*3, 12,20);
+      ellipse(c.size/3, -c.size/3 + cos(c.wiggle)*4, 15,25);
+      ellipse(c.size/3, c.size/3 - cos(c.wiggle)*4, 15,25);
+      ellipse(-c.size/4, -c.size/4 + sin(c.wiggle)*3, 12,20);
+      ellipse(-c.size/4, c.size/4 - sin(c.wiggle)*3, 12,20);
     }
     else if (c.size === 55) { // Octopus
       fill(200, 80, 160);
@@ -309,62 +315,73 @@ function renderCreatures() {
 function updateWhale() {
   whaleTimer--;
   if (whaleTimer <= 0 && !whale) {
-    // Spawn from the right, moving left (negative vx)
-    whale = {x: width + 300, y: height/2, vx: -1.8, size:220, wiggle:0, wiggleSpeed:0.04};
+    let fromLeft = random() < 0.5;
+    let vx = fromLeft ? 1.8 : -1.8;
+    let x = fromLeft ? -300 : width + 300;
+    whale = {x, y: height/2, vx, size:220, wiggle:0, wiggleSpeed:0.04};
     whaleTimer = floor(random(1800, 3600));
   }
   if (whale) {
     whale.x += whale.vx;
     whale.wiggle += whale.wiggleSpeed;
     if (random() < 0.15) {
-      bubbles.push({x: whale.x + (whale.vx < 0 ? -whale.size/3 : whale.size/3), y: whale.y - whale.size/3, size: random(15,30), vy: random(-3,-5), alpha:200});
+      bubbles.push({x: whale.x + (whale.vx > 0 ? whale.size/3 : -whale.size/3), y: whale.y - whale.size/3, size: random(15,30), vy: random(-3,-5), alpha:200});
     }
-    if (whale.x < -300) whale = null;
+    if ((whale.vx > 0 && whale.x > width + 300) || (whale.vx < 0 && whale.x < -300)) whale = null;
   }
 }
 function renderWhale() {
   if (!whale) return;
   push();
   translate(whale.x, whale.y);
+  let absVx = Math.abs(whale.vx);
+  let angle = atan2(0, absVx);
   if (whale.vx < 0) scale(-1, 1);
+  rotate(angle);
   fill(80, 80, 160);
   noStroke();
   beginShape();
-  vertex(-whale.size/2, 0);
-  bezierVertex(-whale.size/2, -whale.size/3, 0, -whale.size/2 + sin(whale.wiggle)*15, whale.size/2, -whale.size/5);
-  bezierVertex(whale.size/2, whale.size/5, 0, whale.size/2 - sin(whale.wiggle)*15, -whale.size/2, whale.size/3);
+  vertex(whale.size/2, 0);
+  bezierVertex(whale.size/2, -whale.size/3, 0, -whale.size/2 + sin(whale.wiggle)*15, -whale.size/2, -whale.size/5);
+  bezierVertex(-whale.size/2, whale.size/5, 0, whale.size/2 - sin(whale.wiggle)*15, whale.size/2, whale.size/3);
   endShape(CLOSE);
-  triangle(0, -whale.size/4, whale.size/6, -whale.size/2.5 + cos(whale.wiggle)*12, whale.size/3, -whale.size/5);
+  triangle(0, -whale.size/4, -whale.size/6, -whale.size/2.5 + cos(whale.wiggle)*12, -whale.size/3, -whale.size/5);
   fill(60, 60, 140);
   beginShape();
-  vertex(whale.size/2, 0);
-  bezierVertex(whale.size/2 + 80 + cos(whale.wiggle*1.5)*20, -whale.size/3, whale.size/2 + 120, -whale.size/6, whale.size/2 + 80, 0);
-  bezierVertex(whale.size/2 + 120, whale.size/6, whale.size/2 + 80 + cos(whale.wiggle*1.5)*20, whale.size/3, whale.size/2, 0);
+  vertex(-whale.size/2, 0);
+  bezierVertex(-whale.size/2 - 80 - cos(whale.wiggle*1.5)*20, -whale.size/3, -whale.size/2 - 120, -whale.size/6, -whale.size/2 - 80, 0);
+  bezierVertex(-whale.size/2 - 120, whale.size/6, -whale.size/2 - 80 - cos(whale.wiggle*1.5)*20, whale.size/3, -whale.size/2, 0);
   endShape(CLOSE);
   fill(255);
-  ellipse(-whale.size/3.5, -whale.size/10, 15,15);
+  ellipse(whale.size/3.5, -whale.size/10, 15,15);
   fill(0);
-  ellipse(-whale.size/3.5 + 4, -whale.size/10, 8,8);
+  ellipse(whale.size/3.5 - 4, -whale.size/10, 8,8);
   pop();
 }
 function updateShark() {
   sharkTimer--;
   if (sharkTimer <= 0 && !shark) {
-    // Spawn from the right, moving left (negative vx)
-    shark = {x: width + 250, y: height/2 + random(-150,150), vx: -random(3,5), size:180, wiggle:0, wiggleSpeed:0.1};
+    let fromLeft = random() < 0.5;
+    let speed = random(3,5);
+    let vx = fromLeft ? speed : -speed;
+    let x = fromLeft ? -250 : width + 250;
+    shark = {x, y: height/2 + random(-150,150), vx, size:180, wiggle:0, wiggleSpeed:0.1};
     sharkTimer = floor(random(2400, 4800));
   }
   if (shark) {
     shark.x += shark.vx;
     shark.wiggle += shark.wiggleSpeed;
-    if (shark.x < -300) shark = null;
+    if ((shark.vx > 0 && shark.x > width + 300) || (shark.vx < 0 && shark.x < -300)) shark = null;
   }
 }
 function renderShark() {
   if (!shark) return;
   push();
   translate(shark.x, shark.y);
-  rotate(atan2(0, shark.vx));
+  let absVx = Math.abs(shark.vx);
+  let angle = atan2(0, absVx);
+  if (shark.vx < 0) scale(-1, 1);
+  rotate(angle);
   fill(100, 100, 110);
   noStroke();
   beginShape();
@@ -395,12 +412,16 @@ function updateDolphins() {
   if (dolphinTimer <= 0 && dolphins.length === 0) {
     let count = floor(random(3,6));
     let baseY = height/2 + random(-100,100);
+    let fromLeft = random() < 0.5;
+    let speed = random(2.5, 4);
+    let vx = fromLeft ? speed : -speed;
+    let spacing = 80;
+    let startX = fromLeft ? -200 : width + 200 + (count - 1) * spacing;
     for (let i = 0; i < count; i++) {
-      // Spawn from the right, moving left (negative vx)
       dolphins.push({
-        x: width + 200 + i*80,
+        x: fromLeft ? startX + i * spacing : startX - i * spacing,
         y: baseY + sin(i)*40,
-        vx: -random(2.5, 4),
+        vx: vx,
         size: random(80, 110),
         wiggle: i*0.5,
         wiggleSpeed: 0.08,
@@ -416,26 +437,35 @@ function updateDolphins() {
       d.y = d.baseY + sin(frameCount*0.05 + d.offset)*50;
       d.wiggle += d.wiggleSpeed;
       if (random() < 0.08) {
-        bubbles.push({x: d.x + d.size/3, y: d.y, size: random(8,16), vy: random(-2,-4), alpha:180});
+        bubbles.push({x: d.x + (d.vx > 0 ? d.size/3 : -d.size/3), y: d.y, size: random(8,16), vy: random(-2,-4), alpha:180});
       }
     });
-    // Check the first dolphin (they are ordered from right to left)
-    if (dolphins[dolphins.length-1].x < -200) dolphins = [];
+    let vx = dolphins[0].vx;
+    let trailingX = dolphins[0].x;
+    if (vx > 0) {
+      if (trailingX > width + 200) dolphins = [];
+    } else {
+      if (trailingX < -200) dolphins = [];
+    }
   }
 }
 function renderDolphins() {
   dolphins.forEach(d => {
     push();
     translate(d.x, d.y);
-    rotate(atan2(sin(frameCount*0.05 + d.offset)*0.5, d.vx));
+    let vyComponent = sin(frameCount*0.05 + d.offset)*0.5;
+    let absVx = Math.abs(d.vx);
+    let angle = atan2(vyComponent, absVx);
+    if (d.vx < 0) scale(-1, 1);
+    rotate(angle);
     fill(180, 180, 200);
     noStroke();
     ellipse(0, 0, d.size*1.4, d.size*0.7);
-    triangle(-d.size/2, 0, -d.size/2 - 30, -10, -d.size/2 - 30, 10);
-    triangle(-d.size/8, 0, -d.size/12, -d.size/2.5 + sin(d.wiggle)*8, d.size/6, 0);
-    triangle(d.size/2, 0, d.size/2 + 40 + cos(d.wiggle)*10, -d.size/4, d.size/2 + 40 + cos(d.wiggle)*10, d.size/4);
+    triangle(d.size/2, 0, d.size/2 + 30, -10, d.size/2 + 30, 10);
+    triangle(d.size/8, 0, d.size/12, -d.size/2.5 + sin(d.wiggle)*8, -d.size/6, 0);
+    triangle(-d.size/2, 0, -d.size/2 - 40 - cos(d.wiggle)*10, -d.size/4, -d.size/2 - 40 - cos(d.wiggle)*10, d.size/4);
     fill(0);
-    ellipse(-d.size/3, -d.size/12, 8,8);
+    ellipse(d.size/3, -d.size/12, 8,8);
     pop();
   });
 }
