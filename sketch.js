@@ -15,11 +15,9 @@ let paused = false;
 let messages = [];
 let bgMusic;
 let caustics;
-
 function preload() {
   bgMusic = loadSound('song.mp3'); // Make sure you have a song.mp3 in your project
 }
-
 function setup() {
   createCanvas(windowWidth, windowHeight);
   caustics = createGraphics(width, height);
@@ -36,7 +34,6 @@ function setup() {
   sharkTimer = floor(random(900, 1800)); // 15–30 seconds
   dolphinTimer = floor(random(600, 1200)); // 10–20 seconds
 }
-
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   caustics.resizeCanvas(width, height);
@@ -51,7 +48,6 @@ function windowResized() {
     if (d.baseY) d.y = d.baseY + sin(frameCount*0.05 + d.offset)*50;
   });
 }
-
 function regenerateEnvironment() {
   plants = [];
   rocks = [];
@@ -74,7 +70,6 @@ function regenerateEnvironment() {
     });
   }
 }
-
 function draw() {
   // === Sunset gradient background ===
   drawSunsetBackground();
@@ -111,7 +106,6 @@ function draw() {
   renderMessages();
   renderHUD();
 }
-
 // === Sunset Background with Sun ===
 function drawSunsetBackground() {
   for (let y = 0; y <= height; y++) {
@@ -133,7 +127,6 @@ function drawSunsetBackground() {
   fill(255, 180, 60);
   ellipse(sunX, sunY, 80);
 }
-
 // === Surface Waves ===
 function drawSurfaceWaves() {
   noFill();
@@ -149,7 +142,6 @@ function drawSurfaceWaves() {
     endShape();
   }
 }
-
 function spawnFish(x, y) {
   let vx = random(-4, 4);
   let vy = random(-3, 3);
@@ -163,7 +155,6 @@ function spawnFish(x, y) {
     wiggleSpeed: random(0.12, 0.22)
   });
 }
-
 function updateFish() {
   for (let f of fish) {
     if (foodParticles.length > 0) {
@@ -176,29 +167,24 @@ function updateFish() {
         if (spd > 4) { f.vx = f.vx/spd*4; f.vy = f.vy/spd*4; }
       }
     }
- 
     f.x += f.vx;
     f.y += f.vy;
- 
     if (f.x < 0 || f.x > width) f.vx *= -1;
     if (f.y < 0 || f.y > height - 40) f.vy *= -1;
     f.x = constrain(f.x, 0, width);
     f.y = constrain(f.y, 0, height - 40);
- 
     f.wiggle += f.wiggleSpeed;
- 
     if (random() < 0.012) {
       bubbles.push({x: f.x, y: f.y, size: random(6, 12), vy: random(-1.5, -2.5), alpha: 180});
     }
   }
 }
-
 function renderFish() {
   for (let f of fish) {
     push();
     translate(f.x, f.y);
     rotate(atan2(f.vy, f.vx) + PI); // Flip 180° so head follows direction
-  
+ 
     // Body
     fill(f.colour);
     noStroke();
@@ -207,25 +193,20 @@ function renderFish() {
     bezierVertex(f.size/2, -f.size/3 + sin(f.wiggle)*3, f.size, -f.size/10, f.size, 0);
     bezierVertex(f.size, f.size/10, f.size/2, f.size/3 - sin(f.wiggle)*3, 0, 0);
     endShape(CLOSE);
- 
     // Pectoral fins
     fill(red(f.colour)-40, green(f.colour)-40, blue(f.colour)-40);
     triangle(f.size/4, -f.size/5, f.size/4 - 10, -f.size/2 + sin(f.wiggle)*4, f.size/4 + 5, -f.size/6);
     triangle(f.size/4, f.size/5, f.size/4 - 10, f.size/2 - sin(f.wiggle)*4, f.size/4 + 5, f.size/6);
- 
     // Dorsal fin
     triangle(f.size/2, 0, f.size/1.8, -f.size/3 + cos(f.wiggle)*5, f.size/1.3, 0);
- 
     // Tail
     fill(f.colour);
     triangle(f.size, 0, f.size*1.3 + cos(f.wiggle)*8, -f.size/3, f.size*1.3 + cos(f.wiggle)*8, f.size/3);
- 
     // Eye (now on the head after flip)
     fill(255);
     ellipse(f.size - f.size/5, -f.size/12, f.size/8, f.size/8);
     fill(0);
     ellipse(f.size - f.size/5 + 2, -f.size/12, f.size/12, f.size/12);
- 
     // Scales hint
     stroke(f.colour);
     strokeWeight(2);
@@ -235,20 +216,16 @@ function renderFish() {
     pop();
   }
 }
-
 // =============== CREATURES =================
 function createTurtle(x, y) {
   return {x, y, vx: random(0.8, 1.8)*(random()>0.5?1:-1), size:45, wiggle:0, wiggleSpeed:0.06};
 }
-
 function createOctopus(x, y) {
   return {x, y, vx: random(0.4, 1)*(random()>0.5?1:-1), size:55, wiggle:0, wiggleSpeed:0.12};
 }
-
 function createStarfish(x, y) {
   return {x, y, vx:0, size:35, rotation:0, rotSpeed:0.008};
 }
-
 function updateCreatures() {
   for (let c of creatures) {
     if (c.vx) {
@@ -262,13 +239,11 @@ function updateCreatures() {
     }
   }
 }
-
 function renderCreatures() {
   for (let c of creatures) {
     push();
     translate(c.x, c.y);
     if (c.vx) rotate(atan2(0, c.vx));
- 
     if (c.size === 45) { // Turtle
       fill(34, 139, 34);
       ellipse(0, 0, c.size*1.2, c.size);
@@ -278,11 +253,11 @@ function renderCreatures() {
       }
       fill(34, 139, 34);
       ellipse(0,0,c.size/1.5,c.size/1.8);
-   
+  
       ellipse(-c.size/1.8 + sin(c.wiggle)*3, 0, 20, 15);
       fill(0);
       ellipse(-c.size/1.8 + 8, -4, 5,5);
-   
+  
       ellipse(-c.size/3, -c.size/3 + cos(c.wiggle)*4, 15,25);
       ellipse(-c.size/3, c.size/3 - cos(c.wiggle)*4, 15,25);
       ellipse(c.size/4, -c.size/4 + sin(c.wiggle)*3, 12,20);
@@ -295,7 +270,7 @@ function renderCreatures() {
       ellipse(-10, -10, 8,8); ellipse(10, -10, 8,8);
       fill(0);
       ellipse(-10, -10, 4,4); ellipse(10, -10, 4,4);
-   
+  
       stroke(200, 80, 160);
       strokeWeight(8);
       for (let i=0; i<8; i++) {
@@ -330,7 +305,6 @@ function renderCreatures() {
     pop();
   }
 }
-
 // =============== RARE VISITORS =================
 function updateWhale() {
   whaleTimer--;
@@ -343,17 +317,16 @@ function updateWhale() {
     whale.x += whale.vx;
     whale.wiggle += whale.wiggleSpeed;
     if (random() < 0.15) {
-      bubbles.push({x: whale.x + whale.size/3, y: whale.y - whale.size/3, size: random(15,30), vy: random(-3,-5), alpha:200});
+      bubbles.push({x: whale.x + (whale.vx < 0 ? -whale.size/3 : whale.size/3), y: whale.y - whale.size/3, size: random(15,30), vy: random(-3,-5), alpha:200});
     }
     if (whale.x < -300) whale = null;
   }
 }
-
 function renderWhale() {
   if (!whale) return;
   push();
   translate(whale.x, whale.y);
-  rotate(atan2(0, whale.vx));
+  if (whale.vx < 0) scale(-1, 1);
   fill(80, 80, 160);
   noStroke();
   beginShape();
@@ -374,7 +347,6 @@ function renderWhale() {
   ellipse(-whale.size/3.5 + 4, -whale.size/10, 8,8);
   pop();
 }
-
 function updateShark() {
   sharkTimer--;
   if (sharkTimer <= 0 && !shark) {
@@ -388,7 +360,6 @@ function updateShark() {
     if (shark.x < -300) shark = null;
   }
 }
-
 function renderShark() {
   if (!shark) return;
   push();
@@ -419,7 +390,6 @@ function renderShark() {
   }
   pop();
 }
-
 function updateDolphins() {
   dolphinTimer--;
   if (dolphinTimer <= 0 && dolphins.length === 0) {
@@ -453,7 +423,6 @@ function updateDolphins() {
     if (dolphins[dolphins.length-1].x < -200) dolphins = [];
   }
 }
-
 function renderDolphins() {
   dolphins.forEach(d => {
     push();
@@ -470,7 +439,6 @@ function renderDolphins() {
     pop();
   });
 }
-
 // =============== EFFECTS & UI =================
 function updateCaustics() {
   caustics.clear();
@@ -487,7 +455,6 @@ function updateCaustics() {
     );
   }
 }
-
 function updateBubbles() {
   for (let i = bubbles.length - 1; i >= 0; i--) {
     let b = bubbles[i];
@@ -497,7 +464,6 @@ function updateBubbles() {
     if (b.y < -20 || b.alpha <= 0) bubbles.splice(i, 1);
   }
 }
-
 function renderBubbles() {
   noStroke();
   for (let b of bubbles) {
@@ -505,7 +471,6 @@ function renderBubbles() {
     ellipse(b.x, b.y, b.size, b.size);
   }
 }
-
 function updateFoodParticles() {
   for (let i = foodParticles.length - 1; i >= 0; i--) {
     let fp = foodParticles[i];
@@ -524,7 +489,6 @@ function updateFoodParticles() {
     }
   }
 }
-
 function renderFoodParticles() {
   fill(160, 82, 45, 220);
   noStroke();
@@ -532,7 +496,6 @@ function renderFoodParticles() {
     ellipse(fp.x, fp.y, fp.size, fp.size);
   }
 }
-
 function updateMessages() {
   for (let i = messages.length - 1; i >= 0; i--) {
     let m = messages[i];
@@ -542,7 +505,6 @@ function updateMessages() {
     if (m.alpha <= 0) messages.splice(i, 1);
   }
 }
-
 function renderMessages() {
   for (let m of messages) {
     push();
@@ -558,7 +520,6 @@ function renderMessages() {
     pop();
   }
 }
-
 function renderPlants() {
   for (let p of plants) {
     stroke(p.color);
@@ -575,7 +536,6 @@ function renderPlants() {
     }
   }
 }
-
 function renderRocks() {
   for (let r of rocks) {
     fill(r.color);
@@ -585,7 +545,6 @@ function renderRocks() {
     ellipse(r.x - r.size/5, r.y - r.size/8, r.size*0.6, r.size*0.4);
   }
 }
-
 function renderHUD() {
   fill(0);
   textSize(width/60);
@@ -593,7 +552,6 @@ function renderHUD() {
   text(`Fish: ${fish.length} | Creatures: ${creatures.length + dolphins.length + (whale?1:0) + (shark?1:0)}`, 15, 25);
   text(`Mode: ${paused ? 'Paused (P)' : 'Running (P to pause)'}`, 15, 50);
 }
-
 // =============== INTERACTIONS =================
 function mousePressed() {
   if (keyIsDown(SHIFT)) {
@@ -625,7 +583,6 @@ function mousePressed() {
     });
   }
 }
-
 function keyPressed() {
   if (key === 'p' || key === 'P') paused = !paused;
   if (key === 'r' || key === 'R') {
@@ -633,7 +590,6 @@ function keyPressed() {
     whale = null; shark = null; dolphins = [];
   }
 }
-
 function resetAquarium() {
   fish = [];
   bubbles = [];
