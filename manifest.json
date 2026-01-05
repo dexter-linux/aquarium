@@ -1,11 +1,11 @@
 {
   "name": "Enhanced Aquarium",
   "short_name": "Aquarium",
+  "description": "An interactive aquarium simulation with fish, sharks, dolphins, sunset effects, and realistic underwater environments.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
-  "description": "An interactive aquarium simulation with fish, sharks, dolphins, and more.",
   "icons": [
     {
       "src": "icons/icon-192.png",
